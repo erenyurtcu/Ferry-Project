@@ -2,17 +2,20 @@ CC = gcc
 CFLAGS = -Wall -pthread
 OBJS = main.o vehicle.o ferry.o
 
-ferry_tour: $(OBJS)
-	$(CC) $(CFLAGS) -o ferry_tour $(OBJS)
+ferry_tour: main.o vehicle.o ferry.o visual.o
+	gcc -Wall -pthread -o ferry_tour main.o vehicle.o ferry.o visual.o
 
-main.o: main.c vehicle.h ferry.h
-	$(CC) $(CFLAGS) -c main.c
+main.o: main.c
+	gcc -Wall -pthread -c main.c
 
-vehicle.o: vehicle.c vehicle.h
-	$(CC) $(CFLAGS) -c vehicle.c
+vehicle.o: vehicle.c
+	gcc -Wall -pthread -c vehicle.c
 
-ferry.o: ferry.c ferry.h
-	$(CC) $(CFLAGS) -c ferry.c
+ferry.o: ferry.c
+	gcc -Wall -pthread -c ferry.c
+
+visual.o: visual.c
+	gcc -Wall -pthread -c visual.c
 
 clean:
 	rm -f *.o ferry_tour

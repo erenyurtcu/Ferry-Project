@@ -17,4 +17,7 @@ extern int current_capacity;
 
 void* ferry_func(void* arg);
 
+// ✅ Ferry yön bilgisi global değişkeni
+extern int direction;  // 0: A → B, 1: B → A
+
 #endif

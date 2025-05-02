@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "visual.h": "c",
+        "vehicle.h": "c",
+        "ferry.h": "c"
+    }
+}

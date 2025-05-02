@@ -11,6 +11,7 @@ typedef struct {
     int port; // 0 or 1
     int toll; // 0-3
     int returned;
+    int location; // 0: Side A, 1: Ferry, 2: Side B
     pthread_t thread_id;
 } Vehicle;
 

@@ -16,6 +16,9 @@ extern int car_count;
 extern int minibus_count;
 extern int truck_count;
 
+// ✅ Yön bilgisinin tanımı
+int direction = 0;  // 0: SIDE-A → SIDE-B, 1: SIDE-B → SIDE-A
+
 void* ferry_func(void* arg) {
     while (1) {
         pthread_mutex_lock(&return_mutex);
@@ -70,6 +73,10 @@ void* ferry_func(void* arg) {
             pthread_mutex_lock(&boarding_mutex);
             current_capacity = 0;
             boarded_count = 0;
+
+            // ✅ Yönü tersine çevir
+            direction = 1 - direction;
+
             pthread_mutex_unlock(&boarding_mutex);
         } else {
             pthread_mutex_unlock(&boarding_mutex);
