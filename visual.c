@@ -23,7 +23,8 @@ extern pthread_mutex_t print_mutex;
 #define ANSI_YELLOW "\033[33m"
 #define ANSI_GREEN "\033[32m"
 
-const char* vehicle_type_str(VehicleType t) {
+// ✅ Eksik tanımı static olarak ekliyoruz (uyarıları engeller)
+static const char* vehicle_type_str(VehicleType t) {
     return t == CAR ? "C" : t == MINIBUS ? "M" : "T";
 }
 
@@ -54,7 +55,7 @@ void print_state() {
            "------------------------------------------------------------",
            "------------------------------------------------------------");
 
-    // Yön bilgisi (MOVING: yeşil, RETURNING: sarı)
+    // Yön bilgisi
     char direction_line[62];
     if (direction == 0)
         snprintf(direction_line, sizeof(direction_line), "%*s→→→ MOVING TO SIDE-B →→→", (34) / 2, "");
@@ -63,11 +64,11 @@ void print_state() {
     printf("%-60s|%s%-72s%s|%-60s\n", "", 
            direction == 0 ? ANSI_GREEN : ANSI_YELLOW, direction_line, ANSI_RESET, "");
 
-    // Ferry içindekiler ortalı
+    // Ferry içindekiler
     char ferry_buf[256] = "";
     for (int i = 0; i < boarded_count; ++i) {
         int id = boarded_ids[i];
-        char temp[8];
+        char temp[16];
         snprintf(temp, sizeof(temp), "%s%d ", vehicle_type_str(vehicles[id].type), id);
         if (strlen(ferry_buf) + strlen(temp) < sizeof(ferry_buf) - 1)
             strcat(ferry_buf, temp);
@@ -84,7 +85,7 @@ void print_state() {
            "------------------------------------------------------------",
            "------------------------------------------------------------");
 
-    // Ortak araç çıktısı bloğu
+    // Araç grupları
     char left[256], right[256], safe_left[51], safe_right[51];
     char label_left[61], label_right[61];
     char line_left[61], line_right[61];
@@ -104,7 +105,7 @@ void print_state() {
 
         for (int i = 0; i < TOTAL_VEHICLES; ++i) {
             if (vehicles[i].type == groups[g].type) {
-                char temp[8];
+                char temp[16];
                 snprintf(temp, sizeof(temp), "%s%d ", vehicle_type_str(vehicles[i].type), vehicles[i].id);
                 if (vehicles[i].location == 0)
                     strcat(left, temp);
