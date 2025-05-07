@@ -2,42 +2,34 @@
 #include <unistd.h>
 #include <pthread.h>
 #include "ferry.h"
+#include "vehicle.h"
 
-// Diğer modüllerden gelen global değişkenler
-extern int total_returned;
-extern pthread_mutex_t return_mutex;
-
-extern int current_capacity;
-extern pthread_mutex_t boarding_mutex;
-
+extern Vehicle vehicles[];
+extern FILE* log_file;
+extern int ferry_trip_number;
+extern int current_capacity, boarded_count, direction;
+extern int total_returned, car_count, minibus_count, truck_count;
 extern int boarded_ids[30];
-extern int boarded_count;
+extern pthread_mutex_t boarding_mutex, return_mutex, log_mutex;
 
-extern int car_count;
-extern int minibus_count;
-extern int truck_count;
-
-extern int direction;
-
-// 🔔 Görsel çıktıyı bastırmak için visual.c'den fonksiyon alınır
-extern void print_state();
+int is_first_return = 1;
 
 void* ferry_func(void* arg) {
+    int wait_counter = 0;
+
     while (1) {
         pthread_mutex_lock(&return_mutex);
         if (total_returned >= TOTAL_VEHICLES) {
             pthread_mutex_unlock(&return_mutex);
-
-            usleep(500000); // ✨ son araçlara zaman tanı
-            print_state();  // ✅ SON GÖRSELİ BAS
-
-            printf("🚢 All vehicles returned. Ferry shutting down.\n");
-
-            // 📊 İstatistik özeti
-            printf("\n✅ Statistics:\n");
-            printf("Cars returned: %d\n", car_count);
-            printf("Minibuses returned: %d\n", minibus_count);
-            printf("Trucks returned: %d\n", truck_count);
+            printf("\n📋 Sefer Özeti:\n");
+            for (int i = 0; i < TOTAL_VEHICLES; i++) {
+                printf("Araç %d (%s): B'ye %d. seferde gitti, A'ya %d. seferde döndü.\n",
+                       vehicles[i].id, vehicle_type_abbr(vehicles[i].type),
+                       vehicles[i].b_trip_no, vehicles[i].a_trip_no);
+            }
+            printf("\n✅ İstatistikler:\nArabalar: %d | Minibüsler: %d | Kamyonlar: %d\n",
+                   car_count, minibus_count, truck_count);
+            fclose(log_file);
             break;
         }
         pthread_mutex_unlock(&return_mutex);
@@ -45,38 +37,60 @@ void* ferry_func(void* arg) {
         pthread_mutex_lock(&boarding_mutex);
         int should_depart = 0;
 
-        if (current_capacity >= MAX_CAPACITY) {
+        // Bekleyen araç var mı?
+        int vehicles_waiting = 0;
+        for (int i = 0; i < TOTAL_VEHICLES; i++) {
+            if ((direction == 0 && vehicles[i].location == 0 && vehicles[i].returned == 0) ||
+                (direction == 1 && vehicles[i].location == 2 && vehicles[i].returned == 0)) {
+                vehicles_waiting = 1;
+                break;
+            }
+        }
+
+        // 🔧 Kalkış koşulları güncellendi
+        if (current_capacity >= MAX_CAPACITY ||  // Kapasite doluysa kalk
+            total_returned + current_capacity >= TOTAL_VEHICLES || // Tüm araçlar tamam
+            (vehicles_waiting && wait_counter >= 20) || // Araç var ama uzun süredir binemedi
+            (!vehicles_waiting && current_capacity > 0 && !is_first_return) || // Feribotta araç var ama bekleyen kalmadı (ilk sefer hariç)
+            (is_first_return && direction == 1) || // İlk dönüş, boş kalkmalı
+            (!vehicles_waiting && current_capacity == 0 && wait_counter >= 30)) { // Araç yok, feribot boş, yönü değiştir
             should_depart = 1;
-        } else {
-            pthread_mutex_lock(&return_mutex);
-            if (total_returned + current_capacity >= TOTAL_VEHICLES)
-                should_depart = 1;
-            pthread_mutex_unlock(&return_mutex);
         }
 
         if (should_depart) {
-            printf("🚢 Departing with vehicles: ");
-            for (int i = 0; i < boarded_count; i++) {
-                printf("%d ", boarded_ids[i]);
+            if (boarded_count > 0) {
+                printf("🚢 Kalkıyor, araçlar: ");
+                for (int i = 0; i < boarded_count; i++) {
+                    printf("%d ", boarded_ids[i]);
+                }
+                printf("\n");
+            } else {
+                printf("🚢 Boş kalkıyor (yön: %s, sefer: %d)\n",
+                       direction == 0 ? "A→B" : "B→A", ferry_trip_number);
             }
-            printf("\n");
-            pthread_mutex_unlock(&boarding_mutex);
 
-            sleep(2); // yolculuk süresi
-            direction = 1 - direction; // yön değişir
+            // Araç konumlarını güncelle
+            for (int i = 0; i < boarded_count; i++) {
+                vehicles[boarded_ids[i]].location = (direction == 0) ? 2 : 0;
+            }
 
-            printf("🚢 Ferry arrived. Unloading...\n");
-            sleep(2);
-
-            pthread_mutex_lock(&boarding_mutex);
+            wait_counter = 0;
+            direction = 1 - direction;
             current_capacity = 0;
             boarded_count = 0;
-            pthread_mutex_unlock(&boarding_mutex);
-        } else {
-            pthread_mutex_unlock(&boarding_mutex);
-        }
+            ferry_trip_number++;
 
-        usleep(200000);
+            // İlk dönüş tamamlandıysa flag'i sıfırla
+            if (is_first_return && direction == 0)
+                is_first_return = 0;
+
+            pthread_mutex_unlock(&boarding_mutex);
+            sleep(3); // Seyahat süresi
+        } else {
+            wait_counter++;
+            pthread_mutex_unlock(&boarding_mutex);
+            usleep(100000);
+        }
     }
 
     return NULL;

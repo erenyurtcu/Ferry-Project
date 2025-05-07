@@ -11,22 +11,16 @@ extern int boarded_ids[30];
 extern int boarded_count;
 extern int total_returned;
 extern int current_capacity;
-extern int direction;  // 0: A→B, 1: B→A
+extern int direction;
 extern pthread_mutex_t print_mutex;
 
 #define TOTAL_VEHICLES (TOTAL_CARS + TOTAL_MINIBUSES + TOTAL_TRUCKS)
 
-// ANSI renk kodları
 #define ANSI_RESET "\033[0m"
 #define ANSI_BLUE "\033[34m"
 #define ANSI_MAGENTA "\033[35m"
 #define ANSI_YELLOW "\033[33m"
 #define ANSI_GREEN "\033[32m"
-
-// ✅ Eksik tanımı static olarak ekliyoruz (uyarıları engeller)
-static const char* vehicle_type_str(VehicleType t) {
-    return t == CAR ? "C" : t == MINIBUS ? "M" : "T";
-}
 
 void center_text(char* dest, size_t size, const char* content) {
     int pad = (60 - (int)strlen(content)) / 2;
@@ -49,13 +43,11 @@ void print_state() {
            ANSI_BLUE, ferry, ANSI_RESET, 
            ANSI_BLUE, side_b, ANSI_RESET);
 
-    // Çizgi
     printf("%-60s|%-60s|%-60s\n",
            "------------------------------------------------------------",
            "------------------------------------------------------------",
            "------------------------------------------------------------");
 
-    // Yön bilgisi
     char direction_line[62];
     if (direction == 0)
         snprintf(direction_line, sizeof(direction_line), "%*s→→→ MOVING TO SIDE-B →→→", (34) / 2, "");
@@ -64,7 +56,6 @@ void print_state() {
     printf("%-60s|%s%-72s%s|%-60s\n", "", 
            direction == 0 ? ANSI_GREEN : ANSI_YELLOW, direction_line, ANSI_RESET, "");
 
-    // Ferry içindekiler
     char ferry_buf[256] = "";
     for (int i = 0; i < boarded_count; ++i) {
         int id = boarded_ids[i];
@@ -79,13 +70,11 @@ void print_state() {
     center_text(ferry_line, sizeof(ferry_line), ferry_buf);
     printf("%-60s|%-60s|%-60s\n", "", ferry_line, "");
 
-    // Alt çizgi
     printf("%-60s|%-60s|%-60s\n",
            "------------------------------------------------------------",
            "------------------------------------------------------------",
            "------------------------------------------------------------");
 
-    // Araç grupları
     char left[256], right[256], safe_left[51], safe_right[51];
     char label_left[61], label_right[61];
     char line_left[61], line_right[61];

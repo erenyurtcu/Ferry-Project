@@ -2,6 +2,10 @@
     "files.associations": {
         "visual.h": "c",
         "vehicle.h": "c",
-        "ferry.h": "c"
+        "ferry.h": "c",
+        "unistd.h": "c",
+        "stdlib.h": "c",
+        "pthread.h": "c",
+        "semaphore.h": "c"
     }
 }
