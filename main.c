@@ -22,8 +22,10 @@ int minibus_count = 0;
 int truck_count = 0;
 int boarded_ids[30];
 int boarded_count = 0;
-int direction = 0; // Feribot SIDE-A'da başlayacak (SIDE-A → SIDE-B)
 int ferry_trip_number = 1;
+
+int direction = 0;  // 🔁 Artık sadece burada tanımlanıyor
+int is_first_return = 1;
 
 Vehicle vehicles[TOTAL_VEHICLES];
 
@@ -33,8 +35,6 @@ int main() {
     srand(time(NULL));
     log_file = fopen("trip_log.txt", "w");
 
-    // Feribot SIDE-A'da başlayacak
-    direction = 0; // Sabit: SIDE-A → SIDE-B
     printf("Feribot başlangıç yönü: SIDE-A → SIDE-B\n");
 
     for (int i = 0; i < 4; ++i)
@@ -49,7 +49,6 @@ int main() {
     pthread_t vehicle_threads[TOTAL_VEHICLES];
     int id = 0;
 
-    // Araçları oluştur
     for (int i = 0; i < TOTAL_CARS; ++i, ++id)
         create_vehicle(&vehicles[id], id, CAR, &vehicle_threads[id]);
     for (int i = 0; i < TOTAL_MINIBUSES; ++i, ++id)
@@ -61,6 +60,7 @@ int main() {
         pthread_join(vehicle_threads[i], NULL);
 
     pthread_join(ferry_thread, NULL);
+
     for (int i = 0; i < 4; ++i)
         sem_destroy(&toll_sem[i]);
 

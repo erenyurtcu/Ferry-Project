@@ -7,12 +7,31 @@
 extern Vehicle vehicles[];
 extern FILE* log_file;
 extern int ferry_trip_number;
-extern int current_capacity, boarded_count, direction;
+extern int current_capacity, boarded_count;
 extern int total_returned, car_count, minibus_count, truck_count;
 extern int boarded_ids[30];
 extern pthread_mutex_t boarding_mutex, return_mutex, log_mutex;
+extern int direction;
+extern int is_first_return;
 
-int is_first_return = 1;
+int can_fill_remaining(int capacity, int direction) {
+    int dp[MAX_CAPACITY + 1] = {0};
+    dp[0] = 1;
+
+    for (int i = 0; i < TOTAL_VEHICLES; i++) {
+        if (vehicles[i].returned == 0 &&
+            vehicles[i].location == (direction == 0 ? 0 : 2)) {
+
+            int weight = vehicles[i].type;
+            for (int j = MAX_CAPACITY; j >= weight; j--) {
+                if (dp[j - weight])
+                    dp[j] = 1;
+            }
+        }
+    }
+
+    return dp[capacity];
+}
 
 void* ferry_func(void* arg) {
     int wait_counter = 0;
@@ -24,8 +43,9 @@ void* ferry_func(void* arg) {
 
             printf("\n📋 Trip Summary:\n");
             for (int i = 0; i < TOTAL_VEHICLES; i++) {
-                int simplified_b_trip = (vehicles[i].b_trip_no + 1) / 2;
-                int simplified_a_trip = (vehicles[i].a_trip_no + 1) / 2;
+                // ✅ Artık ilk dolu sefer Trip #1 olacak
+                int simplified_b_trip = ((vehicles[i].b_trip_no + 1) / 2);
+                int simplified_a_trip = ((vehicles[i].a_trip_no + 1) / 2);
 
                 const char* type_full = vehicle_type_str(vehicles[i].type);
 
@@ -40,7 +60,6 @@ void* ferry_func(void* arg) {
 
             printf("\n✅ Statistics:\nCars: %d | Minibuses: %d | Trucks: %d\n",
                    car_count, minibus_count, truck_count);
-
             fclose(log_file);
             break;
         }
@@ -58,14 +77,18 @@ void* ferry_func(void* arg) {
             }
         }
 
-        if (current_capacity >= MAX_CAPACITY ||
+        int remaining_capacity = MAX_CAPACITY - current_capacity;
+        int cannot_fill = !can_fill_remaining(remaining_capacity, direction);
+
+        should_depart = (
+            current_capacity >= MAX_CAPACITY ||
+            (current_capacity < MAX_CAPACITY && cannot_fill) ||
             total_returned + current_capacity >= TOTAL_VEHICLES ||
             (vehicles_waiting && wait_counter >= 20) ||
             (!vehicles_waiting && current_capacity > 0 && !is_first_return) ||
             (is_first_return && direction == 1) ||
-            (!vehicles_waiting && current_capacity == 0 && wait_counter >= 30)) {
-            should_depart = 1;
-        }
+            (!vehicles_waiting && current_capacity == 0 && wait_counter >= 30)
+        );
 
         if (should_depart) {
             if (boarded_count > 0) {
