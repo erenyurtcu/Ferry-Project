@@ -102,13 +102,19 @@ void create_vehicle(Vehicle* v, int id, VehicleType type, pthread_t* thread) {
 
 const char* vehicle_type_str(VehicleType t) {
     switch (t) {
+        case CAR: return "CAR";
+        case MINIBUS: return "MINIBUS";
+        case TRUCK: return "TRUCK";
+        default: return "?";
+    }
+}
+
+
+const char* vehicle_type_abbr(VehicleType t) {
+    switch (t) {
         case CAR: return "C";
         case MINIBUS: return "MB";
         case TRUCK: return "TR";
         default: return "?";
     }
-}
-
-const char* vehicle_type_abbr(VehicleType t) {
-    return vehicle_type_str(t);
 }

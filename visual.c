@@ -60,7 +60,7 @@ void print_state() {
     for (int i = 0; i < boarded_count; ++i) {
         int id = boarded_ids[i];
         char temp[16];
-        snprintf(temp, sizeof(temp), "%s%d ", vehicle_type_str(vehicles[id].type), id);
+        snprintf(temp, sizeof(temp), "%s%d ", vehicle_type_abbr(vehicles[id].type), id);
         if (strlen(ferry_buf) + strlen(temp) < sizeof(ferry_buf) - 1)
             strcat(ferry_buf, temp);
         else
@@ -95,7 +95,7 @@ void print_state() {
         for (int i = 0; i < TOTAL_VEHICLES; ++i) {
             if (vehicles[i].type == groups[g].type) {
                 char temp[16];
-                snprintf(temp, sizeof(temp), "%s%d ", vehicle_type_str(vehicles[i].type), vehicles[i].id);
+                snprintf(temp, sizeof(temp), "%s%d ", vehicle_type_abbr(vehicles[i].type), vehicles[i].id);
                 if (vehicles[i].location == 0)
                     strcat(left, temp);
                 else if (vehicles[i].location == 2)
