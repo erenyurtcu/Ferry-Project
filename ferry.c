@@ -54,8 +54,8 @@ void* ferry_func(void* arg) {
                            vehicles[i].id, type_full, simplified_b_trip);
                 } else {
                     printf("Vehicle %d (%s): Went to SIDE-B in trip #%d, returned to SIDE-A in trip #%d.\n",
-                           vehicles[i].id, type_full, simplified_b_trip, simplified_a_trip);
-                }
+                           vehicles[i].id, type_full, simplified_b_trip - 1, simplified_a_trip - 1);
+                }                
             }
 
             printf("\n✅ Statistics:\nCars: %d | Minibuses: %d | Trucks: %d\n",
