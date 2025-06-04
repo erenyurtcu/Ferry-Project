@@ -15,6 +15,10 @@ extern int boarded_ids[30];
 extern pthread_mutex_t boarding_mutex, return_mutex, log_mutex;
 extern int direction;
 extern int is_first_return;
+extern int total_trip_duration;
+extern int trip_durations[20];
+extern int trip_count;
+extern int trip_directions[20];
 
 int can_fill_remaining(int capacity, int direction) {
     int dp[MAX_CAPACITY + 1] = {0};
@@ -62,6 +66,18 @@ void* ferry_func(void* arg) {
 
             printf("\n✅ Statistics:\nCars: %d | Minibuses: %d | Trucks: %d\n",
                    car_count, minibus_count, truck_count);
+            
+
+            printf("\n🕓 Individual Trip Durations:\n");
+            for (int i = 0; i < trip_count; i++) {
+                const char* dir_str = trip_directions[i] == 0 ? "A→B" : "B→A";
+                printf("  Trip #%d (%s): %d seconds\n", i + 1, dir_str, trip_durations[i]);
+            }
+
+            printf("\n📊 Total Trip Time: %d seconds\n", total_trip_duration);
+            pthread_mutex_lock(&log_mutex);
+            fprintf(log_file, "\n📊 Total Trip Time: %d seconds\n", total_trip_duration);
+            pthread_mutex_unlock(&log_mutex);
             fclose(log_file);
             break;
         }
@@ -118,8 +134,16 @@ void* ferry_func(void* arg) {
                 is_first_return = 0;
 
             pthread_mutex_unlock(&boarding_mutex);
+
             int travel_time = 3 + rand() % 8;
             sleep(travel_time);
+
+            total_trip_duration += travel_time;
+
+            trip_durations[trip_count] = travel_time;
+            trip_directions[trip_count] = direction == 0 ? 0 : 1;
+            trip_count++;
+
         } else {
             wait_counter++;
             pthread_mutex_unlock(&boarding_mutex);

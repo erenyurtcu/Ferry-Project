@@ -23,6 +23,10 @@ int truck_count = 0;
 int boarded_ids[30];
 int boarded_count = 0;
 int ferry_trip_number = 1;
+int total_trip_duration = 0;
+int trip_durations[20]; 
+int trip_count = 0;
+int trip_directions[20];
 
 int direction = 0; // 0: SIDE-A, 1: SIDE-B
 int is_first_return = 1;
