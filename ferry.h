@@ -9,7 +9,6 @@
 
 void* ferry_func(void* arg);
 
-// Global değişkenlerin bildirimi
 extern int is_first_return;
 
 #endif

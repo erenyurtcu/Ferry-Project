@@ -24,7 +24,7 @@ int boarded_ids[30];
 int boarded_count = 0;
 int ferry_trip_number = 1;
 
-int direction = 0;  // 🔁 Artık sadece burada tanımlanıyor
+int direction = 0; // 0: SIDE-A, 1: SIDE-B
 int is_first_return = 1;
 
 Vehicle vehicles[TOTAL_VEHICLES];

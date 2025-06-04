@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include "vehicle.h"
 #include <unistd.h>
 #include <pthread.h>
 #include "ferry.h"
@@ -116,7 +118,8 @@ void* ferry_func(void* arg) {
                 is_first_return = 0;
 
             pthread_mutex_unlock(&boarding_mutex);
-            sleep(3);
+            int travel_time = 3 + rand() % 8;
+            sleep(travel_time);
         } else {
             wait_counter++;
             pthread_mutex_unlock(&boarding_mutex);
