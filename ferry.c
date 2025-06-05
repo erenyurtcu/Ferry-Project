@@ -72,15 +72,37 @@ void* ferry_func(void* arg) {
             printf("\n✅ Statistics:\nCars: %d | Minibuses: %d | Trucks: %d\n",
                    car_count, minibus_count, truck_count);
             
+            printf("\n🕓 Trip Durations (paired A→B and B→A):\n");
+            printf("┌───────────────┬──────────────────┬──────────────────┐\n");
+            printf("│  Trip Number  │      A -> B      │      B -> A      │\n");
+            printf("├───────────────┼──────────────────┼──────────────────┤\n");
 
-            printf("\n🕓 Individual Trip Durations:\n");
-            for (int i = 0; i < trip_count; i++) {
-                const char* dir_str = trip_directions[i] == 0 ? "A→B" : "B→A";
-                printf("  Trip #%d (%s): %d seconds\n", i + 1, dir_str, trip_durations[i]);
+            int pair_count = trip_count / 2;
+
+            for (int i = 0; i < pair_count - 1; i++) {
+                int a_to_b_duration = -1;
+                int b_to_a_duration = -1;
+
+                for (int j = 0; j < 2; j++) {
+                    int idx = i * 2 + j;
+                    if (idx >= trip_count)
+                        break;
+                    if (trip_directions[idx] == 0)
+                        a_to_b_duration = trip_durations[idx];
+                    else if (trip_directions[idx] == 1)
+                        b_to_a_duration = trip_durations[idx];
+                }
+
+                printf("│%4s%4d%7s│%2s%7d s%7s│%2s%7d s%7s│\n",
+                    "", i + 1, "",
+                    "", a_to_b_duration >= 0 ? a_to_b_duration : 0, "",
+                    "", b_to_a_duration >= 0 ? b_to_a_duration : 0, "");
             }
 
+            printf("└───────────────┴──────────────────┴──────────────────┘\n");
             printf("\n📊 Total Trip Time: %d seconds\n", total_trip_duration);
-            pthread_mutex_lock(&log_mutex);
+
+
             fprintf(log_file, "\n📊 Total Trip Time: %d seconds\n", total_trip_duration);
             pthread_mutex_unlock(&log_mutex);
             fclose(log_file);
@@ -144,7 +166,7 @@ void* ferry_func(void* arg) {
 
             pthread_mutex_unlock(&boarding_mutex);
             
-            int travel_time = /*3 + rand() % 8*/ 1;
+            int travel_time = 2 + rand() % 8;
             sleep(travel_time);
 
             total_trip_duration += travel_time;

@@ -39,22 +39,22 @@ void print_state() {
         }
     }
 
-    printf("📊 Returned: %d | Ferry Capacity: %d\n\n", total_returned, actual_capacity);
+    printf("📊 Returned: %d │ Ferry Capacity: %d\n\n", total_returned, actual_capacity);
 
     char side_a[61], ferry[61], side_b[61];
     snprintf(side_a, sizeof(side_a), "%*s%s", (30 - (int)strlen("SIDE-A") / 2), "", "SIDE-A");
     snprintf(ferry, sizeof(ferry), "%*s%s", (30 - (int)strlen("🚢 Ferry") / 2), "", "🚢 Ferry");
     snprintf(side_b, sizeof(side_b), "%*s%s", (30 - (int)strlen("SIDE-B") / 2), "", "SIDE-B");
 
-    printf("%s%-60s%s|%s%-62s%s|%s%-60s%s\n",
+    printf("%s%-60s%s│%s%-62s%s│%s%-60s%s\n",
            ANSI_BLUE, side_a, ANSI_RESET,
            ANSI_BLUE, ferry, ANSI_RESET,
            ANSI_BLUE, side_b, ANSI_RESET);
 
-    printf("%-60s|%-60s|%-60s\n",
-           "------------------------------------------------------------",
-           "------------------------------------------------------------",
-           "------------------------------------------------------------");
+    printf("%-60s│%-60s│%-60s\n",
+           "────────────────────────────────────────────────────────────",
+           "────────────────────────────────────────────────────────────",
+           "────────────────────────────────────────────────────────────");
 
     // Yön oku: sadece ilk frame'den sonra göster
     static int skip_first_direction = 1;
@@ -68,7 +68,7 @@ void print_state() {
     }
     skip_first_direction = 0;
 
-    printf("%-60s|%s%-72s%s|%-60s\n", "",
+    printf("%-60s│%s%-72s%s│%-60s\n", "",
            direction == 0 ? ANSI_GREEN : ANSI_YELLOW, direction_line, ANSI_RESET, "");
 
     // Feribottaki araçlar
@@ -85,12 +85,12 @@ void print_state() {
 
     char ferry_line[61];
     center_text(ferry_line, sizeof(ferry_line), ferry_buf);
-    printf("%-60s|%-60s|%-60s\n", "", ferry_line, "");
+    printf("%-60s│%-60s│%-60s\n", "", ferry_line, "");
 
-    printf("%-60s|%-60s|%-60s\n",
-           "------------------------------------------------------------",
-           "------------------------------------------------------------",
-           "------------------------------------------------------------");
+    printf("%-60s│%-60s│%-60s\n",
+           "────────────────────────────────────────────────────────────",
+           "────────────────────────────────────────────────────────────",
+           "────────────────────────────────────────────────────────────");
 
     // SIDE-A ve SIDE-B araçları
     char left[256], right[256], safe_left[51], safe_right[51];
@@ -127,14 +127,14 @@ void print_state() {
         snprintf(label_left, sizeof(label_left), "%*s%-*s", 30 - groups[g].pad, "", 10, groups[g].label);
         snprintf(label_right, sizeof(label_right), "%*s%-*s", 30 - groups[g].pad, "", 10, groups[g].label);
 
-        printf("%s%-60s%s|%-60s|%s%-60s%s\n",
+        printf("%s%-60s%s│%-60s│%s%-60s%s\n",
                ANSI_MAGENTA, label_left, ANSI_RESET,
                "",
                ANSI_MAGENTA, label_right, ANSI_RESET);
 
         center_text(line_left, sizeof(line_left), safe_left);
         center_text(line_right, sizeof(line_right), safe_right);
-        printf("%-60s|%-60s|%-60s\n", line_left, "", line_right);
+        printf("%-60s│%-60s│%-60s\n", line_left, "", line_right);
     }
 
     printf("\n");
