@@ -19,6 +19,7 @@ extern int total_trip_duration;
 extern int trip_durations[20];
 extern int trip_count;
 extern int trip_directions[20];
+extern int final_trip_done;
 
 int can_fill_remaining(int capacity, int direction) {
     int dp[MAX_CAPACITY + 1] = {0};
@@ -44,6 +45,10 @@ void* ferry_func(void* arg) {
 
     while (1) {
         pthread_mutex_lock(&return_mutex);
+
+        if (total_returned == TOTAL_VEHICLES)
+            final_trip_done = 1;
+
         if (total_returned >= TOTAL_VEHICLES) {
             pthread_mutex_unlock(&return_mutex);
 
@@ -60,7 +65,7 @@ void* ferry_func(void* arg) {
                            vehicles[i].id, type_full, simplified_b_trip);
                 } else {
                     printf("Vehicle %d (%s): Went to SIDE-B in trip #%d, returned to SIDE-A in trip #%d.\n",
-                           vehicles[i].id, type_full, simplified_b_trip - 1, simplified_a_trip - 1);
+                        vehicles[i].id, type_full, simplified_b_trip, simplified_a_trip);
                 }                
             }
 
@@ -108,6 +113,11 @@ void* ferry_func(void* arg) {
             (!vehicles_waiting && current_capacity == 0 && wait_counter >= 30)
         );
 
+        if (final_trip_done && direction == 0) {
+            pthread_mutex_unlock(&boarding_mutex);
+            break;
+        }
+
         if (should_depart) {
             if (boarded_count > 0) {
                 printf("🚢 Departing with vehicles: ");
@@ -123,7 +133,6 @@ void* ferry_func(void* arg) {
             for (int i = 0; i < boarded_count; i++) {
                 vehicles[boarded_ids[i]].location = (direction == 0) ? 2 : 0;
             }
-
             wait_counter = 0;
             direction = 1 - direction;
             current_capacity = 0;
@@ -134,8 +143,8 @@ void* ferry_func(void* arg) {
                 is_first_return = 0;
 
             pthread_mutex_unlock(&boarding_mutex);
-
-            int travel_time = 3 + rand() % 8;
+            
+            int travel_time = /*3 + rand() % 8*/ 1;
             sleep(travel_time);
 
             total_trip_duration += travel_time;

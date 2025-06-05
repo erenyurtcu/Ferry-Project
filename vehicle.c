@@ -22,6 +22,7 @@ extern sem_t toll_sem[4];
 extern FILE* log_file;
 extern pthread_mutex_t log_mutex;
 extern int is_first_return;
+extern int final_trip_done;
 
 void* vehicle_func(void* arg) {
     Vehicle* v = (Vehicle*)arg;
@@ -74,6 +75,8 @@ void* vehicle_func(void* arg) {
 
     pthread_mutex_lock(&return_mutex);
     total_returned++;
+    if (total_returned == TOTAL_VEHICLES)
+        final_trip_done = 1;
     if (v->type == CAR) car_count++;
     else if (v->type == MINIBUS) minibus_count++;
     else if (v->type == TRUCK) truck_count++;

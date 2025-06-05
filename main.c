@@ -28,8 +28,9 @@ int trip_durations[20];
 int trip_count = 0;
 int trip_directions[20];
 
-int direction = 0; // 0: SIDE-A, 1: SIDE-B
+int direction = 1; // 0: SIDE-A, 1: SIDE-B
 int is_first_return = 1;
+int final_trip_done = 0;
 
 Vehicle vehicles[TOTAL_VEHICLES];
 
