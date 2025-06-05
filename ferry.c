@@ -92,13 +92,11 @@ void* ferry_func(void* arg) {
             
             printf("\nTrip Durations for Each Trip\n");
 
-            printf(ANSI_RESET "┌───────────────┬──────────────────┬──────────────────┐\n" ANSI_RESET);
-
-            printf("│ " ANSI_RESET " Trip Number " ANSI_RESET " │ "
-                ANSI_GREEN "     A -> B     " ANSI_RESET " │ "
-                ANSI_GREEN "     B -> A     " ANSI_RESET " │\n");
-
-            printf(ANSI_RESET "├───────────────┼──────────────────┼──────────────────┤\n" ANSI_RESET);
+            printf(ANSI_RESET "┌───────────────┬────────────────────────────────────────────────────┬────────────────────────────────────────────────────────────────┐\n");
+            printf("│               │                           " ANSI_GREEN "A -> B" ANSI_RESET "                      │                            " ANSI_GREEN "B -> A" ANSI_RESET "                                 │\n");
+            printf("│  " ANSI_RESET "Trip Number" ANSI_RESET "  ├──────────────┬────────────────────────────────────────┼────────────┬────────────────────────────────────────┤\n");
+            printf("│               │     TIME     │   VEHICLES                              │     TIME     │   VEHICLES                              │\n");
+            printf("├───────────────┼──────────────┼────────────────────────────────────────┼────────────┼────────────────────────────────────────┤\n");
 
             int pair_count = trip_count / 2;
             int total_a_to_b = 0;
@@ -107,43 +105,57 @@ void* ferry_func(void* arg) {
             for (int i = 0; i < pair_count; i++) {
                 int a_to_b_duration = -1;
                 int b_to_a_duration = -1;
+                char a_to_b_vehicles[256] = "";
+                char b_to_a_vehicles[256] = "";
 
                 for (int j = 0; j < 2; j++) {
                     int idx = i * 2 + j;
-                    if (idx >= trip_count)
-                        break;
-                    if (trip_directions[idx] == 0)
-                        a_to_b_duration = trip_durations[idx];
-                    else if (trip_directions[idx] == 1)
-                        b_to_a_duration = trip_durations[idx];
+                    if (idx >= trip_count) break;
+
+                    int direction_type = trip_directions[idx];
+                    int duration = trip_durations[idx];
+
+                    char vehicle_buf[256] = "";
+                    for (int v = 0; v < TOTAL_VEHICLES; v++) {
+                        if ((vehicles[v].b_trip_no == idx && direction_type == 0) ||
+                            (vehicles[v].a_trip_no == idx && direction_type == 1)) {
+                            char temp[8];
+                            snprintf(temp, sizeof(temp), "%s%d ", vehicle_type_abbr(vehicles[v].type), vehicles[v].id);
+                            strcat(vehicle_buf, temp);
+                        }
+                    }
+
+                    if (direction_type == 0) {
+                        a_to_b_duration = duration;
+                        strncpy(a_to_b_vehicles, vehicle_buf, sizeof(a_to_b_vehicles));
+                    } else {
+                        b_to_a_duration = duration;
+                        strncpy(b_to_a_vehicles, vehicle_buf, sizeof(b_to_a_vehicles));
+                    }
                 }
 
                 total_a_to_b += (a_to_b_duration >= 0 ? a_to_b_duration : 0);
                 total_b_to_a += (b_to_a_duration >= 0 ? b_to_a_duration : 0);
 
-                printf("│%4s" ANSI_MAGENTA "%4d" ANSI_RESET "%7s│%2s" ANSI_BLUE "%7d s" ANSI_RESET "%7s│%2s" ANSI_BLUE "%7d s" ANSI_RESET "%7s│\n",
+                printf("│%4s" ANSI_MAGENTA "%4d" ANSI_RESET "%7s│%4s" ANSI_BLUE "%4d s" ANSI_RESET "%4s│ %-40s│%4s" ANSI_BLUE "%4d s" ANSI_RESET "%4s│ %-40s│\n",
                     "", i + 1, "",
-                    "", a_to_b_duration >= 0 ? a_to_b_duration : 0, "",
-                    "", b_to_a_duration >= 0 ? b_to_a_duration : 0, "");
+                    "", a_to_b_duration >= 0 ? a_to_b_duration : 0, "", a_to_b_vehicles,
+                    "", b_to_a_duration >= 0 ? b_to_a_duration : 0, "", b_to_a_vehicles);
 
-                if (i != pair_count - 1) {
-                    printf(ANSI_RESET "├───────────────┼──────────────────┼──────────────────┤\n" ANSI_RESET);
-                }
+                printf("├───────────────┼──────────────┼────────────────────────────────────────┼────────────┼────────────────────────────────────────┤\n");
             }
-            printf(ANSI_RESET "├───────────────┼──────────────────┼──────────────────┤\n" ANSI_RESET);
 
-            printf("│%5s" ANSI_MAGENTA "%5s" ANSI_RESET "%5s│%2s" ANSI_MAGENTA "%7d s" ANSI_RESET "%7s│%2s" ANSI_MAGENTA "%7d s" ANSI_RESET "%7s│\n",
-                "", "", "",
-                "", total_a_to_b, "",
-                "", total_b_to_a, "");
+            // Total Row
+            printf("│               │" ANSI_MAGENTA "%8d s" ANSI_RESET "     │%-40s│" ANSI_MAGENTA "%4d s" ANSI_RESET "     │%-40s│\n",
+                total_a_to_b, "", total_b_to_a, "");
 
-            printf("│  " ANSI_MAGENTA "%8s" ANSI_RESET "     %15s   \n", "Total", "├──────────────────┴──────────────────┤");
+            printf("│     " ANSI_MAGENTA "Total" ANSI_RESET "     ├─────────────┴────────────────────────────────────────────────────────────────────────────────┤\n");
+            printf("│               │          " ANSI_RED "%4d s" ANSI_RESET " total travel time                                                                 │\n", total_a_to_b + total_b_to_a);
+
+            printf("└───────────────┴────────────────────────────────────────────────────────────────────────────────────────────┘\n");
+
 
             int total_trip_duration = total_a_to_b + total_b_to_a;
-            printf("│%15s│%22s%d s%18s  │\n", "", ANSI_RED, total_trip_duration, ANSI_RESET);
-
-            printf("└───────────────┴─────────────────────────────────────┘\n");
-
             printf("\n📊 Total Trip Time: %d seconds\n", total_trip_duration);
 
             fprintf(log_file, "\n📊 Total Trip Time: %d seconds\n", total_trip_duration);
