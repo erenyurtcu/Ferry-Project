@@ -6,6 +6,12 @@
 #include "ferry.h"
 #include "vehicle.h"
 
+#define ANSI_RESET    "\033[0m"
+#define ANSI_BLUE     "\033[34m"
+#define ANSI_MAGENTA  "\033[35m"
+#define ANSI_GREEN    "\033[32m"
+#define ANSI_RED "\033[31m"
+
 extern Vehicle vehicles[];
 extern FILE* log_file;
 extern int ferry_trip_number;
@@ -15,7 +21,6 @@ extern int boarded_ids[30];
 extern pthread_mutex_t boarding_mutex, return_mutex, log_mutex;
 extern int direction;
 extern int is_first_return;
-extern int total_trip_duration;
 extern int trip_durations[20];
 extern int trip_count;
 extern int trip_directions[20];
@@ -72,14 +77,21 @@ void* ferry_func(void* arg) {
             printf("\n✅ Statistics:\nCars: %d | Minibuses: %d | Trucks: %d\n",
                    car_count, minibus_count, truck_count);
             
-            printf("\n🕓 Trip Durations (paired A→B and B→A):\n");
-            printf("┌───────────────┬──────────────────┬──────────────────┐\n");
-            printf("│  Trip Number  │      A -> B      │      B -> A      │\n");
-            printf("├───────────────┼──────────────────┼──────────────────┤\n");
+            printf("\nTrip Durations for Each Trip\n");
+
+            printf(ANSI_RESET "┌───────────────┬──────────────────┬──────────────────┐\n" ANSI_RESET);
+
+            printf("│ " ANSI_RESET " Trip Number " ANSI_RESET " │ "
+                ANSI_GREEN "     A -> B     " ANSI_RESET " │ "
+                ANSI_GREEN "     B -> A     " ANSI_RESET " │\n");
+
+            printf(ANSI_RESET "├───────────────┼──────────────────┼──────────────────┤\n" ANSI_RESET);
 
             int pair_count = trip_count / 2;
+            int total_a_to_b = 0;
+            int total_b_to_a = 0;
 
-            for (int i = 0; i < pair_count - 1; i++) {
+            for (int i = 0; i < pair_count; i++) {
                 int a_to_b_duration = -1;
                 int b_to_a_duration = -1;
 
@@ -93,15 +105,33 @@ void* ferry_func(void* arg) {
                         b_to_a_duration = trip_durations[idx];
                 }
 
-                printf("│%4s%4d%7s│%2s%7d s%7s│%2s%7d s%7s│\n",
+                total_a_to_b += (a_to_b_duration >= 0 ? a_to_b_duration : 0);
+                total_b_to_a += (b_to_a_duration >= 0 ? b_to_a_duration : 0);
+
+                printf("│%4s" ANSI_MAGENTA "%4d" ANSI_RESET "%7s│%2s" ANSI_BLUE "%7d s" ANSI_RESET "%7s│%2s" ANSI_BLUE "%7d s" ANSI_RESET "%7s│\n",
                     "", i + 1, "",
                     "", a_to_b_duration >= 0 ? a_to_b_duration : 0, "",
                     "", b_to_a_duration >= 0 ? b_to_a_duration : 0, "");
+
+                if (i != pair_count - 1) {
+                    printf(ANSI_RESET "├───────────────┼──────────────────┼──────────────────┤\n" ANSI_RESET);
+                }
             }
+            printf(ANSI_RESET "├───────────────┼──────────────────┼──────────────────┤\n" ANSI_RESET);
 
-            printf("└───────────────┴──────────────────┴──────────────────┘\n");
+            printf("│%5s" ANSI_MAGENTA "%5s" ANSI_RESET "%5s│%2s" ANSI_MAGENTA "%7d s" ANSI_RESET "%7s│%2s" ANSI_MAGENTA "%7d s" ANSI_MAGENTA "%7s│\n",
+                "", "", "",
+                "", total_a_to_b, "",
+                "", total_b_to_a, "");
+
+            printf("│  " ANSI_MAGENTA "%8s" ANSI_RESET "     %15s   \n", "Total", "├──────────────────┴──────────────────┤");
+
+            int total_trip_duration = total_a_to_b + total_b_to_a;
+            printf("│%15s│%22s%d s%18s  │\n", "", ANSI_RED, total_trip_duration, ANSI_RESET);
+
+            printf("└───────────────┴─────────────────────────────────────┘\n");
+
             printf("\n📊 Total Trip Time: %d seconds\n", total_trip_duration);
-
 
             fprintf(log_file, "\n📊 Total Trip Time: %d seconds\n", total_trip_duration);
             pthread_mutex_unlock(&log_mutex);
@@ -168,8 +198,6 @@ void* ferry_func(void* arg) {
             
             int travel_time = 2 + rand() % 8;
             sleep(travel_time);
-
-            total_trip_duration += travel_time;
 
             trip_durations[trip_count] = travel_time;
             trip_directions[trip_count] = direction == 0 ? 0 : 1;
