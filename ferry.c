@@ -57,22 +57,24 @@ void* ferry_func(void* arg) {
         if (total_returned >= TOTAL_VEHICLES) {
             pthread_mutex_unlock(&return_mutex);
 
-            printf("\n📋 Trip Summary:\n");
+            printf("📋 Trip Summary:\n");
+            printf("┌────────────┬──────────────┬──────────────────┬──────────────────┐\n");
+            printf("│ Vehicle ID │ Vehicle Type │      A -> B      │      B -> A      │\n");
+            printf("├────────────┼──────────────┼──────────────────┼──────────────────┤\n");
+
             for (int i = 0; i < TOTAL_VEHICLES; i++) {
-                // ✅ Artık ilk dolu sefer Trip #1 olacak
                 int simplified_b_trip = ((vehicles[i].b_trip_no + 1) / 2);
                 int simplified_a_trip = ((vehicles[i].a_trip_no + 1) / 2);
-
                 const char* type_full = vehicle_type_str(vehicles[i].type);
 
-                if (simplified_b_trip == simplified_a_trip) {
-                    printf("Vehicle %d (%s): Completed round trip in trip #%d.\n",
-                           vehicles[i].id, type_full, simplified_b_trip);
-                } else {
-                    printf("Vehicle %d (%s): Went to SIDE-B in trip #%d, returned to SIDE-A in trip #%d.\n",
-                        vehicles[i].id, type_full, simplified_b_trip, simplified_a_trip);
-                }                
+                printf("│    %2d      │ %12s │ Went in trip #%2d │ Returned in #%2d  │\n",
+                    vehicles[i].id, type_full, simplified_b_trip, simplified_a_trip);
+
+                if (i != TOTAL_VEHICLES - 1)
+                    printf("├────────────┼──────────────┼──────────────────┼──────────────────┤\n");
             }
+            printf("└────────────┴──────────────┴──────────────────┴──────────────────┘\n");
+
 
             printf("\n✅ Statistics:\nCars: %d | Minibuses: %d | Trucks: %d\n",
                    car_count, minibus_count, truck_count);
@@ -119,7 +121,7 @@ void* ferry_func(void* arg) {
             }
             printf(ANSI_RESET "├───────────────┼──────────────────┼──────────────────┤\n" ANSI_RESET);
 
-            printf("│%5s" ANSI_MAGENTA "%5s" ANSI_RESET "%5s│%2s" ANSI_MAGENTA "%7d s" ANSI_RESET "%7s│%2s" ANSI_MAGENTA "%7d s" ANSI_MAGENTA "%7s│\n",
+            printf("│%5s" ANSI_MAGENTA "%5s" ANSI_RESET "%5s│%2s" ANSI_MAGENTA "%7d s" ANSI_RESET "%7s│%2s" ANSI_MAGENTA "%7d s" ANSI_RESET "%7s│\n",
                 "", "", "",
                 "", total_a_to_b, "",
                 "", total_b_to_a, "");
@@ -196,7 +198,7 @@ void* ferry_func(void* arg) {
 
             pthread_mutex_unlock(&boarding_mutex);
             
-            int travel_time = 2 + rand() % 8;
+            int travel_time = /*2 + rand() % 8*/1;
             sleep(travel_time);
 
             trip_durations[trip_count] = travel_time;
