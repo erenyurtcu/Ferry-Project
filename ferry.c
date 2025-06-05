@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "vehicle.h"
 #include <unistd.h>
 #include <pthread.h>
@@ -11,6 +12,7 @@
 #define ANSI_MAGENTA  "\033[35m"
 #define ANSI_GREEN    "\033[32m"
 #define ANSI_RED "\033[31m"
+#define ANSI_YELLOW "\033[33m"
 
 extern Vehicle vehicles[];
 extern FILE* log_file;
@@ -59,7 +61,7 @@ void* ferry_func(void* arg) {
 
             printf("📋 Trip Summary:\n");
             printf("┌────────────┬──────────────┬──────────────────┬──────────────────┐\n");
-            printf("│ Vehicle ID │ Vehicle Type │      A -> B      │      B -> A      │\n");
+            printf("│ Vehicle ID │ Vehicle Type │ " ANSI_GREEN "     A -> B     " ANSI_RESET " │ " ANSI_GREEN "     B -> A     " ANSI_RESET " │\n");
             printf("├────────────┼──────────────┼──────────────────┼──────────────────┤\n");
 
             for (int i = 0; i < TOTAL_VEHICLES; i++) {
@@ -67,8 +69,17 @@ void* ferry_func(void* arg) {
                 int simplified_a_trip = ((vehicles[i].a_trip_no + 1) / 2);
                 const char* type_full = vehicle_type_str(vehicles[i].type);
 
-                printf("│    %2d      │ %12s │ Went in trip #%2d │ Returned in #%2d  │\n",
-                    vehicles[i].id, type_full, simplified_b_trip, simplified_a_trip);
+                if (strcmp(type_full, "CAR") == 0)
+                    printf("│    %2d      │      " ANSI_MAGENTA "%-5s" ANSI_RESET "   │  Went in trip " ANSI_MAGENTA "#%d" ANSI_RESET " │  Returned in " ANSI_MAGENTA "#%d" ANSI_RESET "  │\n",
+                        vehicles[i].id, type_full, simplified_b_trip, simplified_a_trip);
+                else if (strcmp(type_full, "TRUCK") == 0)
+                    printf("│    %2d      │     " ANSI_YELLOW "%-6s" ANSI_RESET "   │  Went in trip " ANSI_MAGENTA "#%d" ANSI_RESET " │  Returned in " ANSI_MAGENTA "#%d" ANSI_RESET "  │\n",
+                        vehicles[i].id, type_full, simplified_b_trip, simplified_a_trip);
+                else if (strcmp(type_full, "MINIBUS") == 0)
+                    printf("│    %2d      │    " ANSI_BLUE "%-7s" ANSI_RESET "   │  Went in trip " ANSI_MAGENTA "#%d" ANSI_RESET " │  Returned in " ANSI_MAGENTA "#%d" ANSI_RESET "  │\n",
+                        vehicles[i].id, type_full, simplified_b_trip, simplified_a_trip);
+
+
 
                 if (i != TOTAL_VEHICLES - 1)
                     printf("├────────────┼──────────────┼──────────────────┼──────────────────┤\n");
