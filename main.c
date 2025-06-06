@@ -32,6 +32,10 @@ int direction = 1; // 0: SIDE-A, 1: SIDE-B
 int is_first_return = 1;
 int final_trip_done = 0;
 
+int time_elapsed_a[TOTAL_VEHICLES] = {0};
+int time_elapsed_b[TOTAL_VEHICLES] = {0};
+int time_elapsed_ferry[TOTAL_VEHICLES] = {0};
+
 Vehicle vehicles[TOTAL_VEHICLES];
 
 extern void* print_loop(void*);

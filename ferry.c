@@ -27,6 +27,9 @@ extern int trip_durations[20];
 extern int trip_count;
 extern int trip_directions[20];
 extern int final_trip_done;
+extern int time_elapsed_a[TOTAL_VEHICLES];
+extern int time_elapsed_b[TOTAL_VEHICLES];
+extern int time_elapsed_ferry[TOTAL_VEHICLES];
 
 int can_fill_remaining(int capacity, int direction) {
     int dp[MAX_CAPACITY + 1] = {0};
@@ -59,32 +62,40 @@ void* ferry_func(void* arg) {
         if (total_returned >= TOTAL_VEHICLES) {
             pthread_mutex_unlock(&return_mutex);
 
-            printf("📋 Trip Summary:\n");
-            printf("┌────────────┬──────────────┬──────────────────┬──────────────────┐\n");
-            printf("│ Vehicle ID │ Vehicle Type │ " ANSI_GREEN "     A -> B     " ANSI_RESET " │ " ANSI_GREEN "     B -> A     " ANSI_RESET " │\n");
-            printf("├────────────┼──────────────┼──────────────────┼──────────────────┤\n");
+        printf("📋 Trip Summary:\n");
+        printf("┌────────────┬──────────────┬──────────────────┬──────────────────┬────────────┐" ANSI_MAGENTA "TIME ELAPSED" ANSI_RESET "┌──────────────┐\n");
+        printf("│ Vehicle ID │ Vehicle Type │ " ANSI_GREEN "     A -> B     " ANSI_RESET " │ " ANSI_GREEN "     B -> A     " ANSI_RESET " │   " ANSI_MAGENTA "SIDE A" ANSI_RESET "   │   " ANSI_MAGENTA "SIDE B" ANSI_RESET "   │   " ANSI_MAGENTA "ON FERRY" ANSI_RESET "   │\n");
+        printf("├────────────┼──────────────┼──────────────────┼──────────────────┼────────────┼────────────┼──────────────┤\n");
 
-            for (int i = 0; i < TOTAL_VEHICLES; i++) {
-                int simplified_b_trip = ((vehicles[i].b_trip_no + 1) / 2);
-                int simplified_a_trip = ((vehicles[i].a_trip_no + 1) / 2);
-                const char* type_full = vehicle_type_str(vehicles[i].type);
+        for (int i = 0; i < TOTAL_VEHICLES; i++) {
+            int simplified_b_trip = ((vehicles[i].b_trip_no + 1) / 2);
+            int simplified_a_trip = ((vehicles[i].a_trip_no + 1) / 2);
+            const char* type_full = vehicle_type_str(vehicles[i].type);
 
-                if (strcmp(type_full, "CAR") == 0)
-                    printf("│    %2d      │      " ANSI_MAGENTA "%-5s" ANSI_RESET "   │  Went in trip " ANSI_MAGENTA "#%d" ANSI_RESET " │  Returned in " ANSI_MAGENTA "#%d" ANSI_RESET "  │\n",
-                        vehicles[i].id, type_full, simplified_b_trip, simplified_a_trip);
-                else if (strcmp(type_full, "TRUCK") == 0)
-                    printf("│    %2d      │     " ANSI_YELLOW "%-6s" ANSI_RESET "   │  Went in trip " ANSI_MAGENTA "#%d" ANSI_RESET " │  Returned in " ANSI_MAGENTA "#%d" ANSI_RESET "  │\n",
-                        vehicles[i].id, type_full, simplified_b_trip, simplified_a_trip);
-                else if (strcmp(type_full, "MINIBUS") == 0)
-                    printf("│    %2d      │    " ANSI_BLUE "%-7s" ANSI_RESET "   │  Went in trip " ANSI_MAGENTA "#%d" ANSI_RESET " │  Returned in " ANSI_MAGENTA "#%d" ANSI_RESET "  │\n",
-                        vehicles[i].id, type_full, simplified_b_trip, simplified_a_trip);
+            const char* color;
+            if (strcmp(type_full, "CAR") == 0) color = ANSI_MAGENTA;
+            else if (strcmp(type_full, "TRUCK") == 0) color = ANSI_YELLOW;
+            else color = ANSI_BLUE;
 
+            printf("│    %2d      │    %s%-7s%s   │  Went in trip " ANSI_MAGENTA "#%2d" ANSI_RESET " │  Returned in " ANSI_MAGENTA "#%2d" ANSI_RESET "  │",
+                vehicles[i].id, color, type_full, ANSI_RESET, simplified_b_trip, simplified_a_trip);
 
+            // elapsed time'lar örnek: 5, 3, 2 gibi sabit dizilerden geliyor
+            // eğer değişkenler ayrı ayrı tutuluyorsa:
+            // time_elapsed_a[i], time_elapsed_b[i], time_elapsed_ferry[i]
+            // Bu örnek statik veridir
+            int elapsed_a = time_elapsed_a[i];
+            int elapsed_b = time_elapsed_b[i];
+            int elapsed_f = time_elapsed_ferry[i];
 
-                if (i != TOTAL_VEHICLES - 1)
-                    printf("├────────────┼──────────────┼──────────────────┼──────────────────┤\n");
-            }
-            printf("└────────────┴──────────────┴──────────────────┴──────────────────┘\n");
+            printf("  %2d s     │  %2d s     │    %2d s      │\n",
+                elapsed_a, elapsed_b, elapsed_f);
+
+            if (i != TOTAL_VEHICLES - 1)
+                printf("├────────────┼──────────────┼──────────────────┼──────────────────┼────────────┼────────────┼──────────────┤\n");
+        }
+        printf("└────────────┴──────────────┴──────────────────┴──────────────────┴────────────┴────────────┴──────────────┘\n");
+
 
 
             printf("\n✅ Statistics:\nCars: %d | Minibuses: %d | Trucks: %d\n",
@@ -221,7 +232,7 @@ void* ferry_func(void* arg) {
 
             pthread_mutex_unlock(&boarding_mutex);
             
-            int travel_time = /*2 + rand() % 8*/1;
+            int travel_time = 1 /*2 + rand() % 8*/;
             sleep(travel_time);
 
             trip_durations[trip_count] = travel_time;

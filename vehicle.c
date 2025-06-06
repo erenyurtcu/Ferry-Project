@@ -23,17 +23,24 @@ extern FILE* log_file;
 extern pthread_mutex_t log_mutex;
 extern int is_first_return;
 extern int final_trip_done;
+extern int time_elapsed_a[TOTAL_VEHICLES];
+extern int time_elapsed_b[TOTAL_VEHICLES];
+extern int time_elapsed_ferry[TOTAL_VEHICLES];
 
 void* vehicle_func(void* arg) {
     Vehicle* v = (Vehicle*)arg;
 
     sleep(1 + rand() % 2);
+    int wait_start_a = time(NULL);
+
     sem_wait(&toll_sem[v->toll]);
     usleep(100000);
     sem_post(&toll_sem[v->toll]);
 
-    // İlk biniş: Araçlar SIDE-A'dan SIDE-B'ye gider
+    // SIDE-A → B gidiş
     int boarded = 0;
+    time_t ferry_start_a = 0;
+
     while (!boarded) {
         pthread_mutex_lock(&boarding_mutex);
         if (direction == 0 && current_capacity + v->type <= MAX_CAPACITY) {
@@ -41,22 +48,31 @@ void* vehicle_func(void* arg) {
             boarded_ids[boarded_count++] = v->id;
             v->location = 1;
             v->b_trip_no = ferry_trip_number;
+            ferry_start_a = time(NULL);
+            int wait_end_a = time(NULL);
+            time_elapsed_a[v->id] = wait_end_a - wait_start_a;
             boarded = 1;
         }
         pthread_mutex_unlock(&boarding_mutex);
         if (!boarded) usleep(20000);
     }
 
-    // SIDE-B'ye ulaşmayı bekle
+    // Feribot varışı bekleniyor
     while (direction != 1) usleep(20000);
+    int ferry_end_a = time(NULL);
+    time_elapsed_ferry[v->id] += ferry_end_a - ferry_start_a;
 
-    // SIDE-B'de bir sefer bekle
+    int wait_start_b = time(NULL);
+
+    // SIDE-B’de bekleme
     while (ferry_trip_number < v->b_trip_no + 2) {
         usleep(20000);
     }
 
-    // SIDE-B'den SIDE-A'ya dönüş
+    // SIDE-B → A dönüş
     boarded = 0;
+    time_t ferry_start_b = 0;
+
     while (!boarded) {
         pthread_mutex_lock(&boarding_mutex);
         if (direction == 1 && current_capacity + v->type <= MAX_CAPACITY && !is_first_return) {
@@ -64,14 +80,19 @@ void* vehicle_func(void* arg) {
             boarded_ids[boarded_count++] = v->id;
             v->location = 1;
             v->a_trip_no = ferry_trip_number;
+            ferry_start_b = time(NULL);
+            int wait_end_b = time(NULL);
+            time_elapsed_b[v->id] = wait_end_b - wait_start_b;
             boarded = 1;
         }
         pthread_mutex_unlock(&boarding_mutex);
         if (!boarded) usleep(20000);
     }
 
-    // SIDE-A'ya ulaşmayı bekle
+    // Feribot varışı bekleniyor
     while (direction != 0) usleep(20000);
+    int ferry_end_b = time(NULL);
+    time_elapsed_ferry[v->id] += ferry_end_b - ferry_start_b;
 
     pthread_mutex_lock(&return_mutex);
     total_returned++;
@@ -90,6 +111,7 @@ void* vehicle_func(void* arg) {
 
     return NULL;
 }
+
 
 void create_vehicle(Vehicle* v, int id, VehicleType type, pthread_t* thread) {
     v->id = id;
