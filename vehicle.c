@@ -37,7 +37,6 @@ void* vehicle_func(void* arg) {
     usleep(100000);
     sem_post(&toll_sem[v->toll]);
 
-    // SIDE-A → B gidiş
     int boarded = 0;
     time_t ferry_start_a = 0;
 
@@ -57,19 +56,16 @@ void* vehicle_func(void* arg) {
         if (!boarded) usleep(20000);
     }
 
-    // Feribot varışı bekleniyor
     while (direction != 1) usleep(20000);
     int ferry_end_a = time(NULL);
     time_elapsed_ferry[v->id] += ferry_end_a - ferry_start_a;
 
     int wait_start_b = time(NULL);
 
-    // SIDE-B’de bekleme
     while (ferry_trip_number < v->b_trip_no + 2) {
         usleep(20000);
     }
 
-    // SIDE-B → A dönüş
     boarded = 0;
     time_t ferry_start_b = 0;
 
@@ -89,7 +85,6 @@ void* vehicle_func(void* arg) {
         if (!boarded) usleep(20000);
     }
 
-    // Feribot varışı bekleniyor
     while (direction != 0) usleep(20000);
     int ferry_end_b = time(NULL);
     time_elapsed_ferry[v->id] += ferry_end_b - ferry_start_b;
@@ -116,10 +111,10 @@ void* vehicle_func(void* arg) {
 void create_vehicle(Vehicle* v, int id, VehicleType type, pthread_t* thread) {
     v->id = id;
     v->type = type;
-    v->port = 0; // Tüm araçlar SIDE-A'da başlayacak
-    v->toll = rand() % 2; // SIDE-A: Gişe 0 veya 1
+    v->port = 0;
+    v->toll = rand() % 2;
     v->returned = 0;
-    v->location = 0; // SIDE-A
+    v->location = 0;
     v->b_trip_no = -1;
     v->a_trip_no = -1;
     pthread_create(thread, NULL, vehicle_func, v);

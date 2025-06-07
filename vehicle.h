@@ -9,11 +9,11 @@ typedef struct {
     int id;
     VehicleType type;
     int toll;
-    int port; // 0: SIDE-A, 1: Feribot, 2: SIDE-B
-    int returned; // 0: not returned, 1: returned
-    int location; // 0: SIDE-A, 1: Feribot, 2: SIDE-B
-    int b_trip_no; // SIDE-B'ye gidiş seferi
-    int a_trip_no; // SIDE-A'ya gidiş seferi
+    int port; 
+    int returned;
+    int location; 
+    int b_trip_no;
+    int a_trip_no;
 } Vehicle;
 
 void create_vehicle(Vehicle* v, int id, VehicleType type, pthread_t* thread);
